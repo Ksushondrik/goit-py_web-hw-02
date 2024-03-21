@@ -1,13 +1,28 @@
+import re
+from abc import ABC, abstractmethod
 from collections import UserDict
 from datetime import datetime, timedelta
-import re, inspect
 
 
 # Базовий клас для полів запису
-class Field:
+class Field(ABC):
+    @abstractmethod
+    def __init__(self, value: str):
+        self.value = value
+
+    @abstractmethod
+    def __str__(self) -> str:
+        pass
+
+
+# Клас для зберігання імені контакту. Обов'язкове поле
+class Name(Field):
+    # реалізація класу
     def __init__(self, value: str):
         if not value:
             raise Exception("You did not specify a required argument!")
+        elif not value.strip():
+            raise Exception("You entered an empty string!")
         else:
             self.value = value
 
@@ -15,37 +30,38 @@ class Field:
         return str(self.value)
 
 
-# Клас для зберігання імені контакту. Обов'язкове поле
-class Name(Field):
-    # реалізація класу
-    def __init__(self, value: str):
-        if not value.strip():
-            raise Exception("You entered an empty string!")
-        else:
-            super().__init__(value)
-
-
 # Клас для зберігання номера телефону. Має валідацію формату (10 цифр)
 class Phone(Field):
     def __init__(self, value: str):
-        if not ((value.isdigit()) and (len(value) == 10)):
-            raise Exception("Incorrect phone format! Phone not added!")
+        if not value:
+            raise Exception("You did not specify a required argument!")
+        elif not ((value.isdigit()) and (len(value) == 10)):
+            raise Exception("Incorrect phone format! Enter the phone in the format:\"0123456789\" Phone not added!")
         else:
             super().__init__(value)
+
+    def __str__(self):
+        return str(self.value)
 
 
 class Birthday(Field):
     def __init__(self, value: str):
-        try:
-            # Додайте перевірку коректності даних
-            if re.match(r"\d{2}\.\d{2}\.\d{4}", value):
-                super().__init__(value)
-                # та перетворіть рядок на об'єкт datetime
-                datetime.strptime(value, "%d.%m.%Y")
-            else:
-                raise Exception("Invalid date format. Use DD.MM.YYYY")
-        except Exception as e:
-            raise Exception("Invalid date format. Use DD.MM.YYYY") from e
+        if not value:
+            raise Exception("You did not specify a required argument!")
+        else:
+            try:
+                # Додайте перевірку коректності даних
+                if re.match(r"\d{2}\.\d{2}\.\d{4}", value):
+                    super().__init__(value)
+                    # та перетворіть рядок на об'єкт datetime
+                    datetime.strptime(value, "%d.%m.%Y")
+                else:
+                    raise Exception("Invalid date format. Use DD.MM.YYYY")
+            except Exception as e:
+                raise Exception("Invalid date format. Use DD.MM.YYYY") from e
+
+    def __str__(self):
+        return str(self.value)
 
 
 # Клас для зберігання інформації про контакт, включаючи ім'я та список телефонів
@@ -115,54 +131,22 @@ class AddressBook(UserDict):
                 birthday = record.birthday.value
                 birthday = birthday[:6] + str(today.year)
                 birthday = (datetime.strptime(birthday, "%d.%m.%Y")).date()
-                if 0 <= (birthday - today).days <= 7:  # перевіряємо, чи наступає дата впродовж тижня, включаючи поточний день
+                if 0 <= (
+                        birthday - today).days <= 7:  # перевіряємо, чи наступає дата впродовж тижня, включаючи поточний день
                     day_week = (birthday.weekday())  # отримуємо день тижня, на який припадає день народження
-                    user_dict = {"Name": name, "Birthday": birthday.strftime("%Y.%m.%d"), }  # створюємо словник з іменем користувача та датою народження
+                    user_dict = {"Name": name, "Birthday": birthday.strftime(
+                        "%Y.%m.%d"), }  # створюємо словник з іменем користувача та датою народження
                     if day_week == 5:  # перевіряємо чи не випадає на субботу
-                        congratulations_day = birthday + timedelta(days=2)  # день для привітання на 2 дні пізніше, якщо так
+                        congratulations_day = birthday + timedelta(
+                            days=2)  # день для привітання на 2 дні пізніше, якщо так
                     elif day_week == 6:  # перевіряємо чи не випадає на неділю
-                        congratulations_day = birthday + timedelta(days=1)  # день для привітання на день пізніше, якщо так
+                        congratulations_day = birthday + timedelta(
+                            days=1)  # день для привітання на день пізніше, якщо так
                     else:  # всі інші припадають на будній день
                         congratulations_day = birthday  # вітати треба в той же день
-                    user_dict["Day_for_greetings"] = congratulations_day.strftime("%Y.%m.%d")  # додаємо до словника день привітання
+                    user_dict["Day_for_greetings"] = congratulations_day.strftime(
+                        "%Y.%m.%d")  # додаємо до словника день привітання
                     congratulation_list.append(user_dict)  # додаємо в список результатів
             else:
                 continue
         return congratulation_list
-
-
-if __name__ == "__main__":
-    # Створення нової адресної книги
-    book = AddressBook()
-
-    # Створення запису для John
-    john_record = Record("John")
-    john_record.add_phone("1234567890")
-    john_record.add_phone("5555555555")
-    john_record.add_phone("5555555555")
-    john_record.add_birthday("28.09.1991")
-
-    # Додавання запису John до адресної книги
-    book.add_record(john_record)
-
-    # Створення та додавання нового запису для Jane
-    jane_record = Record("Jane")
-    jane_record.add_phone("9876543210")
-    book.add_record(jane_record)
-
-    # Виведення всіх записів у книзі
-    for name, record in book.data.items():
-        print(record)
-
-    # Знаходження та редагування телефону для John
-    john = book.find("John")
-    john.edit_phone("1234567890", "1112223333")
-
-    print(john)  # Виведення: Contact name: John, phones: 1112223333; 5555555555
-
-    # Пошук конкретного телефону у записі John
-    found_phone = john.find_phone("5555555555")
-    print(f"{john.name}: {found_phone}")  # Виведення: 5555555555
-
-    # Видалення запису Jane
-    book.delete("Jane")

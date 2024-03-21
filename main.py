@@ -14,16 +14,7 @@ def main():
         elif command == "hello":
             print("How can I help you?")
         elif command == "help":
-            print("I understand these commands:")
-            print("hello")
-            print("add [name] [phone]")
-            print("change [old_phone] [new_phone]")
-            print("phone [name]")
-            print("all")
-            print("add-birthday [name] [birthday]")
-            print("show-birthday [name]")
-            print("birthdays")
-            print("exit/close")
+            print(fu.help_command())
         elif command == "add":
             print(fu.add_contact(args, book))
         elif command == "change":
@@ -38,6 +29,10 @@ def main():
             print(fu.show_birthday(args, book))
         elif command == "birthdays":
             print(fu.soon_birthdays(book))
+        elif command == "del-phone":
+            print(fu.delete_phone(args, book))
+        elif command == "del-contact":
+            print(fu.delete_contact(args, book))
         else:
             print("Invalid command. Enter 'help' for help)")
     fu.save_data(book)
