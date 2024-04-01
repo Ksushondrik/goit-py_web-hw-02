@@ -116,12 +116,14 @@ def help_command():  # виведення списку команд з яким�
     I understand these commands:
     "hello"
     "add [name] [phone]"
-    "change [old_phone] [new_phone]"
+    "change [name] [old_phone] [new_phone]"
     "phone [name]"
     "all"
     "add-birthday [name] [birthday]"
     "show-birthday [name]"
     "birthdays"
+    "del-phone [name] [phone]"
+    "del-contact [name]"
     "exit/close"
     """
 
